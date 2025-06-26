@@ -1,13 +1,22 @@
-import { useState } from 'react'
 import './App.css'
+import { Routes, Route, Link } from 'react-router-dom';
+import Home from './components/Home';
+import SignInPage from './components/SignInPage';
+import SignUpPage from './components/SignUpPage';
+import Workspace from './components/Workspaces';
+
 
 function App() {
-  const [count, setCount] = useState(0)
 
   return (
-   <div>
-    Hii
-   </div>
+    <div >
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route path="/workspaces" element={<Workspace/>}/>
+        <Route path="/signin" element={<SignInPage/>}/>
+        <Route path="/signup" element={<SignUpPage/>}/>
+      </Routes>
+    </div>
   )
 }
 
