@@ -1,10 +1,11 @@
 import { Search, Settings, Bell, ChevronDown } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 const EditorNavbar = () => {
   return (
     <header className="bg-zinc-900 border-b border-zinc-800 text-white px-6 py-2 flex items-center justify-between">
       <nav className="flex items-center space-x-6 text-sm font-medium">
-        <a href="#" className="hover:text-violet-400 transition">Home</a>
+        <Link to="/workspaces" className="hover:text-violet-400 transition">Home</Link>
         <div className="flex items-center gap-1 hover:text-violet-400 transition cursor-pointer">
           Workspaces
           <ChevronDown size={14} />

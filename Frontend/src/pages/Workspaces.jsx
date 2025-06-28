@@ -24,7 +24,7 @@ const Workspace = () => {
     <div>
       <EditorNavbar />
       <div className="bg-zinc-900 text-white flex justify-center">
-        <div className="min-h-screen  w-[60vw] max-w-7xl px-6 py-8">
+        <div className="min-h-screen w-[60vw] max-w-7xl px-6 py-8">
           <section className="mb-12">
             <h2 className="text-lg font-semibold mb-4">Recently visited</h2>
             <ul className="space-y-2">

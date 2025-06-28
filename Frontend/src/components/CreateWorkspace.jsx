@@ -83,7 +83,7 @@ const CreateWorkspace = ({ setcreateProjectOpen }) => {
 
     const handleCreateSubmit=()=>{
         if(true) {
-            navigate('/workplace/id')
+            navigate('/workspace/1212')
         }
     }
     useEffect(() => {
