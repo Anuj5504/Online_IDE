@@ -37,13 +37,21 @@ const userSchema = new mongoose.Schema({
     workspaces: {
         type: [String],
         default: []
-    }
+    },
+    pendingInvites: [
+        {
+            workspaceId: { type: mongoose.Schema.Types.ObjectId, ref: 'Workspace' },
+            role: { type: String, enum: ['editor', 'viewer'] },
+            invitedAt: { type: Date, default: Date.now }
+        }
+    ]
+
 });
 
 userSchema.methods.toJSON = function () {
-  const user = this.toObject();
-  delete user.password;
-  return user;
+    const user = this.toObject();
+    delete user.password;
+    return user;
 };
 
 userSchema.pre("save", async function (next) {
@@ -64,19 +72,19 @@ userSchema.methods.generateAccessToken = function () {
     if (!secret) {
         throw new Error('ACCESS_TOKEN_SECRET is not defined in environment variables');
     }
-    
+
     return jwt.sign(payload, secret, { expiresIn: process.env.ACCESS_TOKEN_EXPIRY });
 }
 
 userSchema.methods.generateRefreshToken = function () {
-    
+
     const payload = { _id: this._id, };
     const secret = process.env.REFRESH_TOKEN_SECRET;
-    
+
     if (!secret) {
         throw new Error('REFRESH_TOKEN_SECRET is not defined in environment variables');
     }
-    
+
     return jwt.sign(payload, secret, { expiresIn: process.env.REFRESH_TOKEN_EXPIRY });
 }
 

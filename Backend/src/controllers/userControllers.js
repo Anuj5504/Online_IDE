@@ -4,6 +4,7 @@ import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import mongoose from "mongoose";
+import { Workspace } from "../models/workspaceModel.js";
 
 const generateAccessAndRefreshTokens = async (userId) => {
     try {
@@ -258,24 +259,112 @@ const getUserInfo = asyncHandler(async (req, res) => {
 });
 
 
-const changeCurrentPassword = asyncHandler(async(req,res) =>{
-    const {userId,oldPassword,newPassword} = req.body
-    
+const changeCurrentPassword = asyncHandler(async (req, res) => {
+    const { userId, oldPassword, newPassword } = req.body
+
     const user = await User.findById(userId)
-    
+
     const isPasswordCorrect = await user.isPasswordCorrect(oldPassword)
 
-    if(!isPasswordCorrect) {
-        throw new ApiError(400,"Invalid old password")
+    if (!isPasswordCorrect) {
+        throw new ApiError(400, "Invalid old password")
     }
 
     user.password = newPassword
-    await user.save({validateBeforeSave:false})
+    await user.save({ validateBeforeSave: false })
 
     return res
-    .status(200)
-    .json(new ApiResponse(200,user,"Password changed successfully"))
+        .status(200)
+        .json(new ApiResponse(200, user, "Password changed successfully"))
 })
 
-//updatey user profile pending
-export { registerUser, loginUser, logoutUser, updateAccessToken, getUserInfo, updateProfile, changeCurrentPassword}
+const getAllUsers = asyncHandler(async (req, res) => {
+    try {
+        const users = await User.distinct('_id');
+        return res.
+            status(200)
+            .json(new ApiResponse(200, users, "All users"));
+    } catch (error) {
+        throw new ApiError(404, error, "Unable to get all users");
+    }
+
+});
+
+const getInvites = asyncHandler(async (req, res) => {
+    try {
+        const { userId } = req.body;
+
+        const user = await User.findById(userId);
+        
+
+        if (!user) {
+            throw new ApiError(404, "User does not exist");
+        }
+
+        const invites = user.pendingInvites;
+
+        return res
+            .status(200)
+            .json(new ApiResponse(200, invites, "All pending invites"));
+
+    } catch (error) {
+        throw new ApiError(404, error, "Unable to get invites");
+    }
+});
+
+const acceptInvites = asyncHandler(async (req, res) => {
+    try {
+        const { userId, workspaceId } = req.body;
+        const user = await User.findById(userId);
+
+        if (!user) {
+            throw new ApiError(404, "User does not exist");
+        }
+
+        const workspace = await Workspace.findById(workspaceId);
+
+        if (!workspace) {
+            throw new ApiError(404, "workspace does not exist");
+        }
+
+        const invite = user.pendingInvites.find(
+            (inv) => String(inv.workspaceId) === String(workspaceId)
+        );
+
+        if (!invite) {
+            throw new ApiError(400, "No pending invite for this user in workspace");
+        }
+
+        workspace.pendingInvites = workspace.pendingInvites.filter(
+            (inv) => String(inv.userId) !== String(userId)
+        );
+
+        user.pendingInvites = user.pendingInvites.filter(
+            (inv) => String(inv.workspaceId) !== String(workspaceId)
+        );
+
+        workspace.members.push({
+            userId: user._id,
+            role: invite.role || "viewer",
+            joinedAt: new Date(),
+        });
+
+        if (!user.workspaces) {
+            user.workspaces = [];
+        }
+        if (!user.workspaces.includes(workspace._id)) {
+            user.workspaces.push(workspace._id);
+        }
+
+        await workspace.save();
+        await user.save();
+
+        return res
+            .status(200)
+            .json(new ApiResponse(200, "Invite accepted"));
+    } catch (error) {
+        throw new ApiError(404, error, "Error while accepting invite");
+    }
+})
+//update user profile pending
+export { registerUser, loginUser, logoutUser, updateAccessToken, getUserInfo, updateProfile, changeCurrentPassword, getAllUsers, getInvites, acceptInvites };

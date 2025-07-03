@@ -1,8 +1,13 @@
 import express from "express";
 import cors from "cors";
 import connectDB from "./db/index.js";
-import userRouter from "./routes/userRoutes.js"
-import cookieParser from "cookie-parser"
+import cookieParser from "cookie-parser";
+
+//route imports
+import userRouter from "./routes/userRoutes.js";
+import workspaceRouter from "./routes/workspaceRoutes.js";
+import fileRouter from "./routes/fileRoutes.js";
+
 const app = express();
 
 app.use(cors({
@@ -22,6 +27,9 @@ app.get("/", (req, res) => {
   res.send("API is working with MongoDB");
 });
 
-app.use("/api/user", userRouter)
+//routes
+app.use("/api/user", userRouter);
+app.use("/api/workspace", workspaceRouter);
+app.use("/api/file", fileRouter);
 
 export default app;
