@@ -6,7 +6,7 @@ const Navbar = () => {
     let user = true;
 
     return (
-        <header className='rounded-4xl m-auto mt-5 w-[80vw] fixed left-0 top-0 right-0 py-4 px-4 backdrop-blur-lg z-[100] flex items-center border-[1px] border-neutral-900 justify-between'>
+        <header className='text-white rounded-4xl m-auto mt-5 w-[80vw] fixed left-0 top-0 right-0 py-4 px-4 backdrop-blur-lg z-[100] flex items-center border-[1px] border-neutral-900 justify-between'>
             <aside className='flex items-center gap-[2px]'>
                 <p className='text-3xl font-bold'></p>
                 <Link to={'/'}>
