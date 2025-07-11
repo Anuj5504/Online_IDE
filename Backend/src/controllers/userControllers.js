@@ -101,7 +101,7 @@ const loginUser = asyncHandler(async (req, res) => {
             secure: true
         }
 
-        // console.log("Sending user data:", loggedInUser); 
+        console.log("Sending user data:", loggedInUser); 
 
         return res
             .status(200)
@@ -183,100 +183,74 @@ const updateAccessToken = asyncHandler(async (req, res) => {
 });
 
 const updateProfile = asyncHandler(async (req, res) => {
-    const { userId, username, email, firstname, lastname } = req.body;
-
-    const user = await User.findById(userId);
-    if (!user) {
-        throw new ApiError(404, "User does not exist");
-    }
-
-    if (username && username !== user.username) {
+    try {
+      const user = req.user;
+      const { username, email, firstname, lastname } = req.body;
+  
+      if (username && username !== user.username) {
         const existingUsername = await User.findOne({ username });
         if (existingUsername) {
-            throw new ApiError(400, "Username already exists");
+          throw new ApiError(400, "Username already exists");
         }
         user.username = username;
-    }
-
-    if (email && email !== user.email) {
+      }
+  
+      if (email && email !== user.email) {
         const existingEmail = await User.findOne({ email });
         if (existingEmail) {
-            throw new ApiError(400, "Email already exists");
+          throw new ApiError(400, "Email already exists");
         }
         user.email = email;
+      }
+  
+      if (firstname?.trim()) user.firstname = firstname;
+      if (lastname?.trim()) user.lastname = lastname;
+  
+      await user.save();
+  
+      return res
+        .status(200)
+        .json(new ApiResponse(200, user, "Profile updated successfully"));
+    } catch (error) {
+      throw new ApiError(500, "Failed to update profile");
     }
-
-    if (firstname?.trim()) {
-        user.firstname = firstname;
-    }
-
-    if (lastname?.trim()) {
-        user.lastname = lastname;
-    }
-
-    await user.save();
-
-    res.status(200).json({
-        success: true,
-        message: "Profile updated successfully",
-        user,
-    });
-});
-
+  });
+  ``
+  
 
 const getUserInfo = asyncHandler(async (req, res) => {
     try {
-        const { userid } = req.body;
-
-        if (!userid) {
-            throw new ApiError(401, "User id not provided");
-        }
-
-        const user = await User.findById(userid);
-
-        if (!user) {
-            throw new ApiError(401, "User does not exist");
-        }
-
-        const options = {
-            httpOnly: true,
-            secure: true
-        }
-
-        return res
-            .status(200)
-            .json(
-                new ApiResponse(
-                    200,
-                    {
-                        user: user,
-                    },
-                    "User info"
-                ))
-    } catch (error) {
-        throw new ApiError(401, "Failed to get user info");
-    }
-});
-
-
-const changeCurrentPassword = asyncHandler(async (req, res) => {
-    const { userId, oldPassword, newPassword } = req.body
-
-    const user = await User.findById(userId)
-
-    const isPasswordCorrect = await user.isPasswordCorrect(oldPassword)
-
-    if (!isPasswordCorrect) {
-        throw new ApiError(400, "Invalid old password")
-    }
-
-    user.password = newPassword
-    await user.save({ validateBeforeSave: false })
-
-    return res
+      return res
         .status(200)
-        .json(new ApiResponse(200, user, "Password changed successfully"))
-})
+        .json(new ApiResponse(200, { user: req.user }, "User info"));
+    } catch (error) {
+      throw new ApiError(500, "Failed to fetch user info");
+    }
+  });
+  
+
+
+  const changeCurrentPassword = asyncHandler(async (req, res) => {
+    try {
+      const user = req.user;
+      const { oldPassword, newPassword } = req.body;
+  
+      const isPasswordCorrect = await user.isPasswordCorrect(oldPassword);
+      if (!isPasswordCorrect) {
+        throw new ApiError(400, "Old password is incorrect");
+      }
+  
+      user.password = newPassword;
+      await user.save({ validateBeforeSave: false });
+  
+      return res
+        .status(200)
+        .json(new ApiResponse(200, null, "Password changed successfully"));
+    } catch (error) {
+      throw new ApiError(500, "Failed to change password");
+    }
+  });
+  
 
 const getAllUsers = asyncHandler(async (req, res) => {
     try {
@@ -292,79 +266,61 @@ const getAllUsers = asyncHandler(async (req, res) => {
 
 const getInvites = asyncHandler(async (req, res) => {
     try {
-        const { userId } = req.body;
-
-        const user = await User.findById(userId);
-        
-
-        if (!user) {
-            throw new ApiError(404, "User does not exist");
-        }
-
-        const invites = user.pendingInvites;
-
-        return res
-            .status(200)
-            .json(new ApiResponse(200, invites, "All pending invites"));
-
+      const invites = req.user.pendingInvites;
+      return res
+        .status(200)
+        .json(new ApiResponse(200, invites, "All pending invites"));
     } catch (error) {
-        throw new ApiError(404, error, "Unable to get invites");
+      throw new ApiError(500, "Unable to fetch invites");
     }
-});
+  });
+  
 
-const acceptInvites = asyncHandler(async (req, res) => {
+  const acceptInvites = asyncHandler(async (req, res) => {
     try {
-        const { userId, workspaceId } = req.body;
-        const user = await User.findById(userId);
-
-        if (!user) {
-            throw new ApiError(404, "User does not exist");
-        }
-
-        const workspace = await Workspace.findById(workspaceId);
-
-        if (!workspace) {
-            throw new ApiError(404, "workspace does not exist");
-        }
-
-        const invite = user.pendingInvites.find(
-            (inv) => String(inv.workspaceId) === String(workspaceId)
-        );
-
-        if (!invite) {
-            throw new ApiError(400, "No pending invite for this user in workspace");
-        }
-
-        workspace.pendingInvites = workspace.pendingInvites.filter(
-            (inv) => String(inv.userId) !== String(userId)
-        );
-
-        user.pendingInvites = user.pendingInvites.filter(
-            (inv) => String(inv.workspaceId) !== String(workspaceId)
-        );
-
-        workspace.members.push({
-            userId: user._id,
-            role: invite.role || "viewer",
-            joinedAt: new Date(),
-        });
-
-        if (!user.workspaces) {
-            user.workspaces = [];
-        }
-        if (!user.workspaces.includes(workspace._id)) {
-            user.workspaces.push(workspace._id);
-        }
-
-        await workspace.save();
-        await user.save();
-
-        return res
-            .status(200)
-            .json(new ApiResponse(200, "Invite accepted"));
+      const user = req.user;
+      const { workspaceId } = req.body;
+  
+      const workspace = await Workspace.findById(workspaceId);
+      if (!workspace) {
+        throw new ApiError(404, "Workspace not found");
+      }
+  
+      const invite = user.pendingInvites.find(
+        (inv) => String(inv.workspaceId) === String(workspaceId)
+      );
+      if (!invite) {
+        throw new ApiError(400, "No pending invite found");
+      }
+  
+      workspace.pendingInvites = workspace.pendingInvites.filter(
+        (inv) => String(inv.userId) !== String(user._id)
+      );
+      user.pendingInvites = user.pendingInvites.filter(
+        (inv) => String(inv.workspaceId) !== String(workspaceId)
+      );
+  
+      workspace.members.push({
+        userId: user._id,
+        role: invite.role || "viewer",
+        joinedAt: new Date(),
+      });
+  
+      if (!user.workspaces) user.workspaces = [];
+      if (!user.workspaces.includes(workspace._id)) {
+        user.workspaces.push(workspace._id);
+      }
+  
+      await workspace.save();
+      await user.save();
+  
+      return res
+        .status(200)
+        .json(new ApiResponse(200, null, "Invite accepted successfully"));
     } catch (error) {
-        throw new ApiError(404, error, "Error while accepting invite");
+      throw new ApiError(500, "Failed to accept invite");
     }
-})
+  });
+  
 //update user profile pending
 export { registerUser, loginUser, logoutUser, updateAccessToken, getUserInfo, updateProfile, changeCurrentPassword, getAllUsers, getInvites, acceptInvites };

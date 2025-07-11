@@ -5,10 +5,18 @@ import SignUpPage from './components/SignUpPage';
 import Workspace from './pages/Workspaces';
 import EditorPage from './pages/EditorPage';
 import HomePage from './pages/HomePage';
+import { useEffect } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import { getSession } from './redux/slice/userSlice';
 
 
 function App() {
+  const dispatch = useDispatch();
+    const { user, loading, error } = useSelector((state) => state.user);
 
+    useEffect(() => {
+        dispatch(getSession());
+    }, []);
   return (
     <div >
       <Routes>

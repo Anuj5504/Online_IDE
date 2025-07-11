@@ -1,7 +1,44 @@
-import React from 'react'
-import { Link } from 'react-router-dom'
+import React, { useEffect, useState } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
+import { useSelector, useDispatch } from "react-redux";
+import { register } from '../redux/slice/userSlice';
 
 const SignUpPage = () => {
+  const [form, setForm] = useState({
+    username: '',
+    firstname: '',
+    lastname: '',
+    email: '',
+    password: '',
+  });
+
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
+
+  const { user } = useSelector((state) => state.user);
+
+  useEffect(() => {
+    if (user) {
+      navigate("/workspaces")
+    }
+  }, [user])
+
+  const handleChange = (e) => {
+    setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+  }
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    console.log(form)
+    try {
+      const res = await dispatch(register(form)).unwrap();
+      console.log("Registered user:", res);
+      navigate("/workspaces");
+    } catch (err) {
+      console.error("Registration failed:", err);
+      alert(err);
+    }
+  };
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-100 to-purple-100 flex items-center justify-center p-4">
       <div className="flex w-full max-w-5xl shadow-2xl rounded-2xl overflow-hidden bg-white">
@@ -27,20 +64,59 @@ const SignUpPage = () => {
                 User name <div className='text-rose-600 '>*</div>
               </label>
               <input
-                id="username"
+                name="username"
                 type="text"
-                placeholder="Jone Doe"
+                value={form.username}
+                onChange={handleChange}
+                placeholder="Username"
                 className="mt-1 w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400"
               />
             </div>
+            <div className='flex flex-row gap-2'>
+
+              <div>
+                <label htmlFor="firstname" className="text-sm font-medium text-gray-600 flex gap-1">
+                  First Name <div className='text-rose-600'>*</div>
+                </label>
+                <input
+                  id="firstname"
+                  name="firstname"
+                  type="text"
+                  value={form.firstname}
+                  onChange={handleChange}
+                  placeholder="Bruce"
+                  className="mt-1 w-full px-4 py-2 border border-gray-300 rounded-md"
+                  required
+                />
+              </div>
+
+              <div>
+                <label htmlFor="lastname" className="text-sm font-medium text-gray-600 flex gap-1">
+                  Last Name <div className='text-rose-600'>*</div>
+                </label>
+                <input
+                  id="lastname"
+                  name="lastname"
+                  type="text"
+                  value={form.lastname}
+                  onChange={handleChange}
+                  placeholder="Wayne"
+                  className="mt-1 w-full px-4 py-2 border border-gray-300 rounded-md"
+                  required
+                />
+              </div>
+            </div>
+
             <div>
               <label htmlFor="email" className="text-sm font-medium text-gray-600 flex gap-1">
                 Email Address<div className='text-rose-600 '>*</div>
               </label>
               <input
-                id="email"
+                name="email"
                 type="email"
-                placeholder="wayne.enterprises@gotham.com"
+                value={form.email}
+                onChange={handleChange}
+                placeholder="Email Address"
                 className="mt-1 w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400"
               />
             </div>
@@ -50,22 +126,13 @@ const SignUpPage = () => {
                 Password<div className='text-rose-600 '>*</div>
               </label>
               <input
-                id="password"
+                name="password"
                 type="password"
-                placeholder="••••••••••"
+                value={form.password}
+                onChange={handleChange}
+                placeholder="Password"
                 className="mt-1 w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400"
               />
-            </div>
-
-            <div >
-              <select name="purpose" id="purpose" value="purpose" className='w-full cursor-pointer border mt-1  px-4 py-2 border-gray-300 text-gray-600 rounded-md focus:outline-none focus:ring-2 cursorpo'>
-                <option value="">Select a purpose (optional)</option>
-                <option value="learning">Learning / Practice</option>
-                <option value="projects">Building Projects</option>
-                <option value="interview">Interview Prep</option>
-                <option value="collaboration">Team Collaboration</option>
-                <option value="exploring">Just Exploring</option>
-              </select>
             </div>
 
             <div className="flex items-center justify-between text-sm text-gray-500">
@@ -78,6 +145,7 @@ const SignUpPage = () => {
             <div className="flex space-x-4 ">
               <button
                 type="submit"
+                onClick={handleSubmit}
                 className="w-1/2 bg-blue-500 text-white py-2 rounded-md hover:bg-blue-600 transition cursor-pointer"
               >
                 SIGNUP
