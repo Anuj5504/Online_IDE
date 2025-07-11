@@ -1,8 +1,21 @@
+import { File } from "../models/fileModel.js";
 import { User } from "../models/userModel.js";
 import { Workspace } from "../models/workspaceModel.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
+import { templateMap } from "../utils/templates.js";
+import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
+
+const s3 = new S3Client({
+    region: process.env.AWS_REGION,
+    Credentials: {
+        accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+        secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+    },
+});
+
+const BUCKET_NAME = process.env.S3_BUCKET_NAME;
 
 const createWorkspace = asyncHandler(async (req, res) => {
     try {
@@ -31,6 +44,10 @@ const createWorkspace = asyncHandler(async (req, res) => {
             tags,
         })
 
+        if (!workspace || !workspace._id) {
+            throw new ApiError(500, "Workspace creation failed, no ID returned");
+        }
+
         user.workspaces.push(workspace._id);
         await user.save();
 
@@ -45,6 +62,39 @@ const createWorkspace = asyncHandler(async (req, res) => {
             }
         }
 
+        const { name: fileName, content } = templateMap[templateType];
+        const s3Key = `${workspace._id}/${fileName}`;
+
+        const putCommand = new PutObjectCommand({
+            Bucket: BUCKET_NAME,
+            Key: s3Key,
+            Body: content,
+            ContentType: "text/plain",
+        });
+
+        await s3.send(putCommand);
+
+        const file = await File.create({
+            workspaceId: workspace._id,
+            parent: null, // root folder
+            name: fileName, 
+            isFolder: false,
+            fileType: templateType, 
+            s3Key: s3Key, 
+            uploadedBy: user._id.toString(),
+            sizeInBytes: Buffer.byteLength(content, 'utf8'),
+            versionHistory: [
+                {
+                    s3Key: s3Key,
+                    uploadedBy: user._id.toString()
+                }
+            ]
+        });
+
+
+        //SAVE root file in workspace
+        workspace.documents.push(file._id);
+        await workspace.save();
 
         return res
             .status(200)

@@ -27,7 +27,7 @@ const EditorPage = () => {
     setOpenFiles((prev) => prev.filter((f) => f.id !== id));
     if (id === activeId && openFiles.length > 1) {
       const next = openFiles.find((f) => f.id !== id);
-      setActiveId(next.id);
+      setActiveId(next ? next.id : '');
     }
   };
 

@@ -23,7 +23,7 @@ const EditorSidebar = () => {
   };
 
   return (
-    <div className="bg-[#252526] text-gray-200 w-64 h-screen flex flex-col border-r border-gray-700">
+    <div className="bg-[#252526] text-gray-200 h-screen flex flex-col border-r border-gray-700">
       {/* Tabs */}
       <div className="flex justify-around py-2 bg-[#1e1e1e] border-b border-gray-700">
         <button

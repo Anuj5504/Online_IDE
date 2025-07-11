@@ -14,6 +14,10 @@ const fileSchema = mongoose.Schema({
         type: String,
         required: true
     },
+    path: {
+        type: String,
+        default: "/"
+    },
     isFolder: {
         type: Boolean,
         default: false
@@ -22,9 +26,6 @@ const fileSchema = mongoose.Schema({
         type: String
     },
     s3Key: {
-        type: String
-    },
-    s3Url: {
         type: String
     },
     uploadedBy: {
@@ -40,6 +41,16 @@ const fileSchema = mongoose.Schema({
             uploadedBy: String
         }
     ],
+    isLocked: {
+        type: Boolean,
+        default: false
+    },
+    lockedBy: {
+        type: String 
+    },
+    lockedAt: {
+        type: Date
+    },
     createdAt: {
         type: Date,
         default: Date.now
