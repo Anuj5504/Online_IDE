@@ -4,6 +4,9 @@ import EditorSidebar from '../components/EditorSidebar';
 import CodeEditor from '../components/CodeEditor';
 import CodeOutput from '../components/CodeOutput';
 import FileTabs from '../components/FileTabs';
+import { useParams } from 'react-router-dom';
+import { getFiles } from '../api/fileApi';
+import { transformFilesToTree } from '../utils/fileTree';
 
 const MIN_WIDTH = 100;
 const MAX_WIDTH = 600;
@@ -14,6 +17,8 @@ const EditorPage = () => {
   const isDraggingSidebar = useRef(false);
   const isDraggingOutput = useRef(false);
 
+  const { id } = useParams();
+
   //language
   const [language, setlanguage] = useState('python')
 
@@ -22,6 +27,22 @@ const EditorPage = () => {
     { id: '2', name: 'main.py', language: 'python', dirty: false },
   ]);
   const [activeId, setActiveId] = useState('1');
+
+  const getAllFiles=async()=>{
+    try {
+      const response=await getFiles(id);
+      const tree = transformFilesToTree(response.data.data);
+      console.log(tree);
+    } catch (error) {
+      throw new Error("Cannot get files");
+    }
+  };
+
+  useEffect(() => {
+    if (id) {
+      getAllFiles();
+    }
+  }, [id]);
 
   const closeFile = (id) => {
     setOpenFiles((prev) => prev.filter((f) => f.id !== id));

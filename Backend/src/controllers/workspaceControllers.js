@@ -9,7 +9,7 @@ import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
 
 const s3 = new S3Client({
     region: process.env.AWS_REGION,
-    Credentials: {
+    credentials: {
         accessKeyId: process.env.AWS_ACCESS_KEY_ID,
         secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
     },
@@ -19,9 +19,9 @@ const BUCKET_NAME = process.env.S3_BUCKET_NAME;
 
 const createWorkspace = asyncHandler(async (req, res) => {
     try {
-        const { userid, name, description, collaborators, templateType, tags } = req.body;
+        const { name, description, collaborators, templateType, tags } = req.body;
 
-        const user = await User.findById(userid);
+        const user = req.user;
 
         if (!user) {
             throw new ApiError(400, "User doesnot exist");
@@ -32,7 +32,7 @@ const createWorkspace = asyncHandler(async (req, res) => {
         }
 
         if (!templateType) {
-            throw new ApiError(400, "Workspace template required");
+            throw new ApiError(400, `Invalid or missing template for type: ${templateType}`);
         }
 
         const workspace = await Workspace.create({
@@ -47,12 +47,14 @@ const createWorkspace = asyncHandler(async (req, res) => {
         if (!workspace || !workspace._id) {
             throw new ApiError(500, "Workspace creation failed, no ID returned");
         }
-
         user.workspaces.push(workspace._id);
         await user.save();
 
         for (const collaborator of collaborators) {
             const invitedUser = await User.findOne({ email: collaborator.email });
+            if(!invitedUser) {
+                continue;
+            }
             if (invitedUser) {
                 invitedUser.pendingInvites.push({
                     workspaceId: workspace._id,
@@ -61,12 +63,11 @@ const createWorkspace = asyncHandler(async (req, res) => {
                 await invitedUser.save();
             }
         }
-
         const { name: fileName, content } = templateMap[templateType];
         const s3Key = `${workspace._id}/${fileName}`;
 
         const putCommand = new PutObjectCommand({
-            Bucket: BUCKET_NAME,
+            Bucket: BUCKET_NAME,    
             Key: s3Key,
             Body: content,
             ContentType: "text/plain",
@@ -77,10 +78,10 @@ const createWorkspace = asyncHandler(async (req, res) => {
         const file = await File.create({
             workspaceId: workspace._id,
             parent: null, // root folder
-            name: fileName, 
+            name: fileName,
             isFolder: false,
-            fileType: templateType, 
-            s3Key: s3Key, 
+            fileType: templateType,
+            s3Key: s3Key,
             uploadedBy: user._id.toString(),
             sizeInBytes: Buffer.byteLength(content, 'utf8'),
             versionHistory: [

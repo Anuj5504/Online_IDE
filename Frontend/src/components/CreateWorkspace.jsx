@@ -11,6 +11,9 @@ import {
     Braces,
     Users
 } from 'lucide-react';
+import axios from 'axios';
+import { createWorkspaceApi } from '../api/workplaceApi';
+import { useSelector } from 'react-redux';
 
 
 
@@ -74,24 +77,64 @@ const FILTERS = [
 const CreateWorkspace = ({ setcreateProjectOpen }) => {
     const [search, setSearch] = useState('');
     const [filter, setFilter] = useState('all');
-    const [invite, setinvite] = useState([{
-        email: '',
-        to: '',
-        from: ''
-    }]);
-    const navigate=useNavigate();
 
-    const handleCreateSubmit=()=>{
-        if(true) {
-            navigate('/workspace/1212')
+    const [highLight, sethighLight] = useState('');
+
+    const [form, setform] = useState({
+        name: '',
+        description: '',
+        templateType: '',
+        tags: [''],
+        collaborators: [],
+    })
+
+    const handleChange = (e) => {
+        setform((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+    }
+
+    const navigate = useNavigate();
+
+    const handleCreateSubmit = async (e) => {
+        e.preventDefault();
+
+        try {
+            const response = await createWorkspaceApi(form);
+            console.log(response)
+            const workspaceId = response.data.data._id;
+            if (response && workspaceId) {
+                navigate(`/workspace/${workspaceId}`);
+            } else {
+                throw new Error("Invalid response from server.");
+            }
+        } catch (error) {
+            console.error("Workplace creation failed failed:", error);
+            alert(error);
         }
     }
+
+    const handleClick = (template) => {
+        if (highLight == '' || highLight != template.id) {
+            setform((prev) => ({
+                ...prev,
+                templateType: template.id,
+            }));
+
+            sethighLight(template.id);
+        }
+        else {
+            form.templateType = '';
+            sethighLight('');
+        }
+    }
+
+
     useEffect(() => {
         document.body.style.overflow = 'hidden';
         return () => {
             document.body.style.overflow = '';
         };
     }, []);
+
     const visibleTemplates = useMemo(() => {
         return TEMPLATES.filter((t) => {
             const matchesFilter = filter === 'all' || t.category === filter;
@@ -125,6 +168,8 @@ const CreateWorkspace = ({ setcreateProjectOpen }) => {
                     <input
                         id="ws-name"
                         type="text"
+                        name="name"
+                        onChange={handleChange}
                         placeholder="My Workspace"
                         className="mt-1 w-full px-4 py-2 rounded-md bg-zinc-800 border border-zinc-700 focus:outline-none focus:ring-2 focus:ring-violet-500"
                         required
@@ -141,6 +186,8 @@ const CreateWorkspace = ({ setcreateProjectOpen }) => {
                     <input
                         id="ws-desc"
                         type="text"
+                        name="description"
+                        onChange={handleChange}
                         placeholder="Enter description"
                         className="mt-1 w-full px-4 py-2 rounded-md bg-zinc-800 border border-zinc-700 focus:outline-none focus:ring-2 focus:ring-violet-500"
                     />
@@ -185,7 +232,8 @@ const CreateWorkspace = ({ setcreateProjectOpen }) => {
                             {visibleTemplates.map((tpl) => (
                                 <div
                                     key={tpl.id}
-                                    className="flex flex-col gap-2 bg-zinc-800 hover:bg-zinc-700 p-4 rounded-md cursor-pointer transition-colors"
+                                    onClick={() => handleClick(tpl)}
+                                    className={`flex flex-col gap-2  p-4 rounded-md cursor-pointer transition-colors ${highLight === tpl.id ? "bg-violet-600 text-white" : "bg-zinc-800 hover:bg-zinc-700 "}`}
                                 >
                                     <div className="w-10 h-10 flex items-center justify-center bg-zinc-700 rounded-md">
                                         {tpl.icon}
@@ -221,7 +269,7 @@ const CreateWorkspace = ({ setcreateProjectOpen }) => {
                     <button
                         type="submit"
                         className="cursor-pointer flex items-center gap-2 bg-blue-600 hover:bg-blue-700 px-6 py-2 rounded-md transition-colors"
-                    onClick={handleCreateSubmit}
+                        onClick={handleCreateSubmit}
                     >
                         Create
                         <Plus size={18} />
