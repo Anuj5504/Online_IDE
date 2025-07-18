@@ -7,6 +7,7 @@ const workspaceSchema = mongoose.Schema({
     },
     owner: {
         type: String,
+        ref: 'User',
         required: true
     },
     templateType: {

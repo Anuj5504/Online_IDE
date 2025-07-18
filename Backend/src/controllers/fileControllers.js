@@ -1,8 +1,9 @@
 import { File } from "../models/fileModel.js";
+import { Workspace } from "../models/workspaceModel.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
-import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
+import { S3Client, PutObjectCommand,GetObjectCommand } from "@aws-sdk/client-s3";
 
 const s3 = new S3Client({
     region: process.env.AWS_REGION,
@@ -126,4 +127,28 @@ const getWorkspaceFiles = asyncHandler(async (req, res) => {
     );
 });
 
-export { getWorkspaceFiles,createFile,updateFile };
+const getS3ObjectStream = async (key) => {
+  const command = new GetObjectCommand({
+    Bucket: BUCKET_NAME,
+    Key: key,
+  });
+
+  const data = await s3.send(command);
+  return data.Body; 
+};
+
+const getFileContent = asyncHandler(async (req, res) => {
+  const file = await File.findById(req.params.fileId);
+  if (!file) throw new ApiError(404, "File not found");
+
+  const workspace = await Workspace.findById(file.workspaceId);
+  if (!workspace.members.includes(req.user.id) && workspace.owner !== req.user.id) {
+    throw new ApiError(403, "Not authorized");
+  }
+
+  const stream = await getS3ObjectStream(file.s3Key); 
+  stream.pipe(res); 
+});
+
+
+export { getWorkspaceFiles,createFile,updateFile,getFileContent };

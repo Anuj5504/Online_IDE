@@ -108,4 +108,16 @@ const createWorkspace = asyncHandler(async (req, res) => {
     }
 })
 
-export { createWorkspace };
+const getUserWorkspaces = asyncHandler(async (req, res) => {
+  const user = req.user;
+
+  if (!user || !user.workspaces) {
+    throw new ApiError(401, "Unauthorized or no workspaces");
+  }
+
+  const workspaces = await Workspace.find({ _id: { $in: user.workspaces } }).populate("owner", "firstname lastname username email");
+
+  res.status(200).json(new ApiResponse(200, workspaces, "Fetched user workspaces"));
+});
+
+export { createWorkspace,getUserWorkspaces };
