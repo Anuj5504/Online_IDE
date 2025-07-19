@@ -6,3 +6,7 @@ const API = axios.create({
 });
 
 export const getFiles=(id)=>API.get(`/file/${id}`);
+
+export const getFileContent=(id)=>API.get(`/file/getfilecontent/${id}`);
+
+export const updateFileContent=(id,data)=>API.get(`/updatefile/${id}`,data);

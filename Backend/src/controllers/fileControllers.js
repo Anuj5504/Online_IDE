@@ -3,14 +3,14 @@ import { Workspace } from "../models/workspaceModel.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
-import { S3Client, PutObjectCommand,GetObjectCommand } from "@aws-sdk/client-s3";
+import { S3Client, PutObjectCommand, GetObjectCommand } from "@aws-sdk/client-s3";
 
 const s3 = new S3Client({
-    region: process.env.AWS_REGION,
-    Credentials: {
-        accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-        secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
-    },
+  region: process.env.AWS_REGION,
+  Credentials: {
+    accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+  },
 });
 
 const BUCKET_NAME = process.env.S3_BUCKET_NAME;
@@ -33,7 +33,12 @@ const findParentFolder = async (workspaceId, path) => {
 };
 
 const createFile = asyncHandler(async (req, res) => {
-  const { workspaceId, path = "/", name, fileType, uploadedBy } = req.body;
+  const { workspaceId, path = "/", name, fileType } = req.body;
+  const user = req.user;
+
+  if (!user) {
+    throw new ApiError(400, "User not logged in");
+  }
 
   if (!workspaceId || !name) {
     throw new ApiError(400, "workspaceId and file name are required");
@@ -41,7 +46,7 @@ const createFile = asyncHandler(async (req, res) => {
 
   const parent = await findParentFolder(workspaceId, path);
 
-  const fullS3Key = `${workspaceId}/content${path.endsWith("/") ? path : path + "/"}${name}`;
+  const fullS3Key = `${workspaceId}/${name}`;
 
   const command = new PutObjectCommand({
     Bucket: BUCKET_NAME,
@@ -60,12 +65,12 @@ const createFile = asyncHandler(async (req, res) => {
     fileType,
     path,
     s3Key: fullS3Key,
-    uploadedBy,
+    uploadedBy: user._id,
     sizeInBytes: 0,
     versionHistory: [
       {
         s3Key: fullS3Key,
-        uploadedBy,
+        uploadedBy:user._id,
       },
     ],
   });
@@ -114,17 +119,17 @@ const updateFile = asyncHandler(async (req, res) => {
 });
 
 const getWorkspaceFiles = asyncHandler(async (req, res) => {
-    const { workspaceId } = req.params;
+  const { workspaceId } = req.params;
 
-    if (!workspaceId) {
-        throw new ApiError(400, "Workspace ID is required");
-    }
+  if (!workspaceId) {
+    throw new ApiError(400, "Workspace ID is required");
+  }
 
-    const files = await File.find({ workspaceId });
+  const files = await File.find({ workspaceId });
 
-    return res.status(200).json(
-        new ApiResponse(200, files, "Files fetched successfully")
-    );
+  return res.status(200).json(
+    new ApiResponse(200, files, "Files fetched successfully")
+  );
 });
 
 const getS3ObjectStream = async (key) => {
@@ -134,7 +139,7 @@ const getS3ObjectStream = async (key) => {
   });
 
   const data = await s3.send(command);
-  return data.Body; 
+  return data.Body;
 };
 
 const getFileContent = asyncHandler(async (req, res) => {
@@ -146,9 +151,9 @@ const getFileContent = asyncHandler(async (req, res) => {
     throw new ApiError(403, "Not authorized");
   }
 
-  const stream = await getS3ObjectStream(file.s3Key); 
-  stream.pipe(res); 
+  const stream = await getS3ObjectStream(file.s3Key);
+  stream.pipe(res);
 });
 
 
-export { getWorkspaceFiles,createFile,updateFile,getFileContent };
+export { getWorkspaceFiles, createFile, updateFile, getFileContent };

@@ -4,26 +4,68 @@ import {
   Users,
   Settings,
   FilePlus,
-  FolderPlus
+  FolderPlus,
+  ChevronDown,
+  ChevronRight
 } from 'lucide-react';
 
-const EditorSidebar = () => {
+const EditorSidebar = ({
+  fileTree ,
+  onFileClick ,
+  onAddFile ,
+  onAddFolder ,
+}) => {
   const [activeTab, setActiveTab] = useState('explorer');
-  const [files, setFiles] = useState(['index.js', 'App.jsx']);
-  const [folders, setFolders] = useState(['components']);
+  const [expandedFolders, setExpandedFolders] = useState({});
 
-  const addFile = () => {
-    const name = prompt('Enter file name');
-    if (name) setFiles([...files, name]);
+  const toggleFolder = (id) => {
+    setExpandedFolders((prev) => ({
+      ...prev,
+      [id]: !prev[id],
+    }));
   };
 
-  const addFolder = () => {
-    const name = prompt('Enter folder name');
-    if (name) setFolders([...folders, name]);
+  const renderTree = (nodes, level = 0) => {
+    return nodes.map((node) => {
+      const padding = 12 + level * 12;
+
+      if (node.isFolder) {
+        const isOpen = expandedFolders[node.id];
+        return (
+          <div key={node.id} className="mb-1">
+            <div
+              onClick={() => toggleFolder(node.id)}
+              className="flex items-center gap-1 text-green-400 cursor-pointer"
+              style={{ paddingLeft: `${padding}px` }}
+            >
+              {isOpen ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+              <Folder size={14} />
+              <span className="font-medium">{node.name}</span>
+            </div>
+            {isOpen && node.children && (
+              <div className="mt-1">
+                {renderTree(node.children, level + 1)}
+              </div>
+            )}
+          </div>
+        );
+      } else {
+        return (
+          <div
+            key={node.id}
+            onClick={() => onFileClick(node)}
+            className="ml-6 text-gray-300 hover:text-white cursor-pointer"
+            style={{ paddingLeft: `${padding}px` }}
+          >
+            {node.name}
+          </div>
+        );
+      }
+    });
   };
 
   return (
-    <div className="bg-[#252526] text-gray-200 h-screen flex flex-col border-r border-gray-700">
+    <div className="bg-[#252526] text-gray-200 h-full flex flex-col border-r border-gray-700">
       {/* Tabs */}
       <div className="flex justify-around py-2 bg-[#1e1e1e] border-b border-gray-700">
         <button
@@ -52,27 +94,15 @@ const EditorSidebar = () => {
             <div className="flex justify-between items-center mb-2">
               <span className="text-gray-400 font-medium">Explorer</span>
               <div className="flex gap-2">
-                <button onClick={addFile} title="New File">
+                <button onClick={onAddFile} title="New File">
                   <FilePlus size={16} className="hover:text-white" />
                 </button>
-                <button onClick={addFolder} title="New Folder">
+                <button onClick={onAddFolder} title="New Folder">
                   <FolderPlus size={16} className="hover:text-white" />
                 </button>
               </div>
             </div>
-
-            <div className="pl-2">
-              {folders.map((folder, i) => (
-                <div key={`folder-${i}`} className="mb-1 flex items-center gap-2 text-green-400">
-                  <Folder size={16} /> <span className="font-semibold">{folder}</span>
-                </div>
-              ))}
-              {files.map((file, i) => (
-                <div key={`file-${i}`} className="ml-6 text-gray-300 hover:text-white">
-                  {file}
-                </div>
-              ))}
-            </div>
+            <div>{renderTree(fileTree)}</div>
           </>
         )}
 

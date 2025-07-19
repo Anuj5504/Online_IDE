@@ -1,23 +1,51 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Lock, Users, ArrowRight, Plus } from 'lucide-react';
 import CreateWorkspace from '../components/CreateWorkspace';
 import EditorNavbar from '../components/EditorNavbar';
+import { getallworkspace } from '../api/workplaceApi';
+import { useSelector, useDispatch } from 'react-redux';
+import { Link } from 'react-router-dom';
 
 const Workspace = () => {
   const [createProjectOpen, setcreateProjectOpen] = useState(false);
-  const workspaces = [
+
+  const { user } = useSelector((state) => state.user);
+
+  const [workspaces, setworkspaces] = useState([]);
+
+  const handleGetWorkspace = async () => {
+    try {
+      const response = await getallworkspace();
+
+      const mapped = response.data.data.map((ws) => ({
+        name: ws.name,
+        description: ws.description,
+        ownerId: ws.owner._id || ws.owner,
+        workspaceId: ws._id,
+        templateType:ws.templateType,
+        role:
+          (ws.owner._id || ws.owner) === user._id
+            ? 'You (Owner)'
+            : 'Member',
+      }));
+      console.log(mapped)
+      setworkspaces(mapped);
+    } catch (error) {
+      console.error("Error fetching workspaces", error);
+      alert("Error fetching workspaces");
+    }
+  };
+
+  useEffect(() => {
+    if (user) {
+      handleGetWorkspace();
+    }
+  }, [user]);
+
+  const recent = [
     { name: 'Webdev1', icon: <Lock size={18} className="text-gray-400" /> },
     { name: 'My Workspace', icon: <Lock size={18} className="text-gray-400" /> },
     { name: 'DBMS-PCCOE Workspace', icon: <Users size={18} className="text-gray-400" /> },
-  ];
-
-  const features = [
-    { title: 'REST API basics', desc: 'Get up to speed with testing REST APIs.' },
-    { title: 'Integration testing basics', desc: 'Verify if your APIs work as expected.' },
-    { title: 'API documentation', desc: 'Create beautiful API documentation using Markdown.' },
-    { title: 'API scenario testing', desc: 'Iterate through data and trigger workflows.' },
-    { title: 'Data visualization', desc: 'Turn response data into visualizations.' },
-    { title: 'Authorization methods', desc: 'Learn about different auth types and setup flows.' },
   ];
 
   return (
@@ -28,7 +56,7 @@ const Workspace = () => {
           <section className="mb-12">
             <h2 className="text-lg font-semibold mb-4">Recently visited</h2>
             <ul className="space-y-2">
-              {workspaces.map((ws, idx) => (
+              {recent.map((ws, idx) => (
                 <li
                   key={idx}
                   className="flex justify-between items-center bg-zinc-800 hover:bg-zinc-700 p-3 rounded-md cursor-pointer transition-colors"
@@ -71,14 +99,24 @@ const Workspace = () => {
                 </div>
               </div>
 
-              {features.map((f, idx) => (
-                <div
-                  key={idx}
-                  className="h-56 bg-zinc-800 hover:bg-zinc-700 p-4 rounded-md transition-colors cursor-pointer flex flex-col"
-                >
-                  <h3 className="font-medium mb-1">{f.title}</h3>
-                  <p className="text-sm text-gray-400">{f.desc}</p>
-                </div>
+              {workspaces.map((ws, idx) => (
+                <Link to={`/workspace/${ws.workspaceId}`}>
+                  <div
+                    key={idx}
+                    className="h-56 bg-zinc-800 hover:bg-zinc-700 p-4 rounded-md transition-colors cursor-pointer flex flex-col justify-between"
+                  >
+                    <div>
+                      <div className='flex justify-between'>
+                      <h3 className="font-medium mb-1 text-xl">{ws.name}</h3>
+                      <h2 className="text-gray-500">{ws.templateType}</h2>
+                      </div>
+                      <p className="text-sm text-gray-400 mb-2">
+                        {ws.description || 'No description provided.'}
+                      </p>
+                    </div>
+                    <p className="text-xs text-gray-500 italic">Role: {ws.role}</p>
+                  </div>
+                </Link>
               ))}
             </div>
           </section>
@@ -105,13 +143,11 @@ const Workspace = () => {
           </section>
         </div>
 
-        {
-          createProjectOpen && (
-            <div className="fixed inset-0 z-50 backdrop-blur-sm flex items-center justify-center">
-              <CreateWorkspace setcreateProjectOpen={setcreateProjectOpen} />
-            </div>
-          )
-        }
+        {createProjectOpen && (
+          <div className="fixed inset-0 z-50 backdrop-blur-sm flex items-center justify-center">
+            <CreateWorkspace setcreateProjectOpen={setcreateProjectOpen} />
+          </div>
+        )}
       </div>
     </div>
   );

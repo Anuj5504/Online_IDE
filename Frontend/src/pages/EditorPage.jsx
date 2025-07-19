@@ -7,6 +7,8 @@ import FileTabs from '../components/FileTabs';
 import { useParams } from 'react-router-dom';
 import { getFiles } from '../api/fileApi';
 import { transformFilesToTree } from '../utils/fileTree';
+import { useSelector } from 'react-redux'; // Assuming user is in Redux
+import { useFileLoader } from '../utils/fileLoader';
 
 const MIN_WIDTH = 100;
 const MAX_WIDTH = 600;
@@ -17,35 +19,86 @@ const EditorPage = () => {
   const isDraggingSidebar = useRef(false);
   const isDraggingOutput = useRef(false);
 
-  const { id } = useParams();
+  const { id: workspaceId } = useParams();
+  const { user } = useSelector(state => state.user); // assumes { user } in Redux
 
-  //language
-  const [language, setlanguage] = useState('python')
+  const [fileTree, setFileTree] = useState([]);
+  const [fileContents, setFileContents] = useState({});
+  const [openFiles, setOpenFiles] = useState([]);
+  const [activeId, setActiveId] = useState(null);
+  const [selectedFileId, setSelectedFileId] = useState(null);
+  const [pendingFile, setPendingFile] = useState(null);
 
-  const [openFiles, setOpenFiles] = useState([
-    { id: '1', name: 'App.jsx', language: 'react', dirty: true },
-    { id: '2', name: 'main.py', language: 'python', dirty: false },
-  ]);
-  const [activeId, setActiveId] = useState('1');
+  const { content, error } = useFileLoader(selectedFileId, user?._id);
 
-  const getAllFiles=async()=>{
+  const getAllFiles = async () => {
     try {
-      const response=await getFiles(id);
+      const response = await getFiles(workspaceId);
+      console.log(response)
       const tree = transformFilesToTree(response.data.data);
-      console.log(tree);
+      setFileTree(tree);
     } catch (error) {
-      throw new Error("Cannot get files");
+      console.error("Cannot get files", error);
     }
   };
 
   useEffect(() => {
-    if (id) {
+    if (workspaceId) {
       getAllFiles();
     }
-  }, [id]);
+  }, [workspaceId]);
+
+  const detectLanguage = (filename) => {
+    const ext = filename.split('.').pop();
+    switch (ext) {
+      case 'js': return 'javascript';
+      case 'jsx': return 'react';
+      case 'py': return 'python';
+      case 'cpp': return 'cpp';
+      default: return 'plaintext';
+    }
+  };
+
+  const handleFileClick = (file) => {
+    if (file.isFolder) return;
+
+    const isOpen = openFiles.find(f => f.id === file.id);
+    if (isOpen) {
+      setActiveId(file.id);
+      return;
+    }
+
+    setPendingFile(file);
+    setSelectedFileId(file.id);
+  };
+
+  useEffect(() => {
+    if (pendingFile && content) {
+      const language = detectLanguage(pendingFile.name);
+      const newFile = {
+        ...pendingFile,
+        content,
+        language,
+      };
+
+      setOpenFiles(prev => [...prev, newFile]);
+      setFileContents(prev => ({ ...prev, [pendingFile.id]: content }));
+      setActiveId(pendingFile.id);
+
+      setPendingFile(null);
+      setSelectedFileId(null);
+    }
+
+    if (error) {
+      console.error("Socket load error:", error);
+      setPendingFile(null);
+      setSelectedFileId(null);
+    }
+  }, [content, error, pendingFile]);
 
   const closeFile = (id) => {
     setOpenFiles((prev) => prev.filter((f) => f.id !== id));
+    
     if (id === activeId && openFiles.length > 1) {
       const next = openFiles.find((f) => f.id !== id);
       setActiveId(next ? next.id : '');
@@ -59,6 +112,7 @@ const EditorPage = () => {
   const previewCode = (id) => {
     console.log('Live Preview:', id);
   };
+
   const handleMouseMove = (e) => {
     if (isDraggingSidebar.current) {
       const newWidth = Math.min(Math.max(e.clientX, MIN_WIDTH), MAX_WIDTH);
@@ -88,7 +142,7 @@ const EditorPage = () => {
       <EditorNavbar />
       <div className="flex flex-1 bg-zinc-900 overflow-hidden">
         <div style={{ width: sidebarWidth }} className="border-r border-zinc-700 bg-zinc-800">
-          <EditorSidebar />
+          <EditorSidebar fileTree={fileTree} onFileClick={handleFileClick} />
         </div>
         <div
           onMouseDown={() => (isDraggingSidebar.current = true)}
@@ -104,7 +158,11 @@ const EditorPage = () => {
             onRun={runCode}
             onPreview={previewCode}
           />
-          <CodeEditor language={language} />
+          <CodeEditor
+            file={openFiles.find(f => f.id === activeId)}
+            fileContents={fileContents}
+            setFileContents={setFileContents}
+          />
         </div>
 
         <div

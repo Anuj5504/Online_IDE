@@ -1,4 +1,4 @@
-import { MenuIcon } from "lucide-react";
+import { MenuIcon, User } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { getSession, logout } from "../redux/slice/userSlice.js";
@@ -9,7 +9,8 @@ const Navbar = () => {
 
     const dispatch = useDispatch();
     const { user, loading, error } = useSelector((state) => state.user);
-
+    
+    
    
 
     const handleClick = async () => {
