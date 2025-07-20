@@ -35,6 +35,7 @@ const findParentFolder = async (workspaceId, path) => {
 const createFile = asyncHandler(async (req, res) => {
   const { workspaceId, path = "/", name, fileType } = req.body;
   const user = req.user;
+  console.log(req.body)
 
   if (!user) {
     throw new ApiError(400, "User not logged in");

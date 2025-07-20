@@ -8,15 +8,20 @@ import {
   ChevronDown,
   ChevronRight
 } from 'lucide-react';
+import { createFile } from '../api/fileApi';
+import { useParams } from 'react-router-dom';
 
 const EditorSidebar = ({
-  fileTree ,
-  onFileClick ,
-  onAddFile ,
-  onAddFolder ,
+  fileTree,
+  onFileClick,
+  onAddFolder, // unused for now
 }) => {
   const [activeTab, setActiveTab] = useState('explorer');
   const [expandedFolders, setExpandedFolders] = useState({});
+  const [fileName, setFileName] = useState('');
+  const [createMode, setCreateMode] = useState('');
+
+  const { id: workspaceId } = useParams();
 
   const toggleFolder = (id) => {
     setExpandedFolders((prev) => ({
@@ -64,9 +69,31 @@ const EditorSidebar = ({
     });
   };
 
+  const handleCreateFile = async () => {
+    if (!fileName.trim()) return;
+    const split=fileName.split('.');
+
+    const fileType=split[split.length-1];
+
+    try {
+      const data={
+        name: fileName,
+        path: '/',
+        fileType,
+        workspaceId: workspaceId
+      };
+      const response = await createFile(data);
+      console.log(response);
+      
+      setFileName('');
+      setCreateMode('');
+    } catch (err) {
+      console.error('Error creating file:', err);
+    }
+  };
+
   return (
     <div className="bg-[#252526] text-gray-200 h-full flex flex-col border-r border-gray-700">
-      {/* Tabs */}
       <div className="flex justify-around py-2 bg-[#1e1e1e] border-b border-gray-700">
         <button
           className={`p-2 ${activeTab === 'explorer' ? 'bg-[#333333] rounded' : ''}`}
@@ -94,14 +121,36 @@ const EditorSidebar = ({
             <div className="flex justify-between items-center mb-2">
               <span className="text-gray-400 font-medium">Explorer</span>
               <div className="flex gap-2">
-                <button onClick={onAddFile} title="New File">
+                <button title="New File" onClick={() => setCreateMode('file')}>
                   <FilePlus size={16} className="hover:text-white" />
                 </button>
-                <button onClick={onAddFolder} title="New Folder">
-                  <FolderPlus size={16} className="hover:text-white" />
+                <button title="New Folder" disabled>
+                  <FolderPlus size={16} className="opacity-30 cursor-not-allowed" />
                 </button>
               </div>
             </div>
+
+            {createMode === 'file' && (
+              <div className="flex gap-2 pb-2 items-center">
+                <FilePlus
+                  size={16}
+                  className="hover:text-white cursor-pointer"
+                />
+                <input
+                  type="text"
+                  value={fileName}
+                  onChange={(e) => setFileName(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      handleCreateFile();
+                    }
+                  }}
+                  placeholder="Enter file name"
+                  className="w-full border rounded-3xl px-3 py-1 "
+                />
+              </div>
+            )}
+
             <div>{renderTree(fileTree)}</div>
           </>
         )}
