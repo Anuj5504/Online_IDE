@@ -2,7 +2,7 @@ import React from 'react';
 import { clsx } from 'clsx';
 import { Globe, Play, X } from 'lucide-react';
 
-const FileTabs = ({ files, activeId, onActivate, onClose, onRun, onPreview }) => {
+const FileTabs = ({ files, activeId, onActivate, onClose, runTrigger, setrunTrigger }) => {
   const iconFor = (lang = '') => {
     switch (lang.toLowerCase()) {
       case 'javascript': return 'codicon codicon-file-code';
@@ -60,14 +60,14 @@ const FileTabs = ({ files, activeId, onActivate, onClose, onRun, onPreview }) =>
         <div className="ml-auto flex items-center pr-3 gap-2 text-white">
           {showRun(current.language) && (
             <button
-              onClick={() => onRun(current.id)}
+              onClick={() => setrunTrigger(true)}
               className="flex items-center gap-1 text-xs px-2 py-1 border border-zinc-600 rounded hover:bg-zinc-700"
               aria-label="Run Code"
             >
               <Play className="h-3 w-3" /> Run
             </button>
           )}
-          {showPreview(current.language) && (
+          {/* {showPreview(current.language) && (
             <button
               onClick={() => onPreview(current.id)}
               className="flex items-center gap-1 text-xs px-2 py-1 border border-zinc-600 rounded hover:bg-zinc-700"
@@ -75,7 +75,7 @@ const FileTabs = ({ files, activeId, onActivate, onClose, onRun, onPreview }) =>
             >
               <Globe className="h-3 w-3" /> Live Preview
             </button>
-          )}
+          )} */}
         </div>
       )}
     </div>

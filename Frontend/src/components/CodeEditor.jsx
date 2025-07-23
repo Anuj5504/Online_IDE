@@ -6,7 +6,7 @@ import { java } from '@codemirror/lang-java';
 import { markdown } from '@codemirror/lang-markdown';
 import { useDebouncedCallback } from 'use-debounce';
 import { useSelector } from 'react-redux';
-import { socket } from '../utils/socket';
+import { editorSocket } from '../utils/socket';
 
 const languageExtensions = {
     javascript: javascript({ jsx: true, typescript: true }),
@@ -36,7 +36,7 @@ const CodeEditor = ({ file, fileContents, setFileContents }) => {
         };
 
         console.log("Emitting save-file with:", payload);
-        socket.emit("save-file", payload);
+        editorSocket.emit("save-file", payload);
     }, 1000);
 
     const handleChange = (val) => {

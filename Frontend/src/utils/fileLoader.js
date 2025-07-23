@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
-import { socket } from "./socket";
-
+import { editorSocket } from "./socket";
 
 
 export const useFileLoader = (fileId, userId) => {
@@ -10,7 +9,7 @@ export const useFileLoader = (fileId, userId) => {
   useEffect(() => {
     if (!fileId) return;
 
-    socket.emit("load-file", { fileId, userId });
+    editorSocket.emit("load-file", { fileId, userId });
 
     const onSuccess = ({ fileId: loadedId, content }) => {
       setContent(content);
@@ -22,12 +21,12 @@ export const useFileLoader = (fileId, userId) => {
       setContent(null);
     };
 
-    socket.once("load-file-success", onSuccess);
-    socket.once("load-file-error", onError);
+    editorSocket.once("load-file-success", onSuccess);
+    editorSocket.once("load-file-error", onError);
 
     return () => {
-      socket.off("load-file-success", onSuccess);
-      socket.off("load-file-error", onError);
+      editorSocket.off("load-file-success", onSuccess);
+      editorSocket.off("load-file-error", onError);
     };
   }, [fileId, userId]);
 

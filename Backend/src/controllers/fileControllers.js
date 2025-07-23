@@ -4,6 +4,7 @@ import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { S3Client, PutObjectCommand, GetObjectCommand } from "@aws-sdk/client-s3";
+import { templateMap } from "../utils/templates.js";
 
 const s3 = new S3Client({
   region: process.env.AWS_REGION,
@@ -36,7 +37,7 @@ const createFile = asyncHandler(async (req, res) => {
   const { workspaceId, path = "/", name, fileType } = req.body;
   const user = req.user;
   console.log(req.body)
-
+  
   if (!user) {
     throw new ApiError(400, "User not logged in");
   }
@@ -48,11 +49,13 @@ const createFile = asyncHandler(async (req, res) => {
   const parent = await findParentFolder(workspaceId, path);
 
   const fullS3Key = `${workspaceId}/${name}`;
+  const {content}=templateMap[fileType];
+  console.log(content);
 
   const command = new PutObjectCommand({
     Bucket: BUCKET_NAME,
     Key: fullS3Key,
-    Body: "",
+    Body: content,
     ContentType: "text/plain",
   });
 

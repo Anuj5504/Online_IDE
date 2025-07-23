@@ -7,7 +7,7 @@ import FileTabs from '../components/FileTabs';
 import { useParams } from 'react-router-dom';
 import { getFiles } from '../api/fileApi';
 import { transformFilesToTree } from '../utils/fileTree';
-import { useSelector } from 'react-redux'; // Assuming user is in Redux
+import { useSelector } from 'react-redux'; 
 import { useFileLoader } from '../utils/fileLoader';
 
 const MIN_WIDTH = 100;
@@ -28,13 +28,16 @@ const EditorPage = () => {
   const [activeId, setActiveId] = useState(null);
   const [selectedFileId, setSelectedFileId] = useState(null);
   const [pendingFile, setPendingFile] = useState(null);
+  const [language, setlanguage] = useState("")
 
+  const [runTrigger, setrunTrigger] = useState(false)
+
+  
   const { content, error } = useFileLoader(selectedFileId, user?._id);
 
   const getAllFiles = async () => {
     try {
       const response = await getFiles(workspaceId);
-      console.log(response)
       const tree = transformFilesToTree(response.data.data);
       setFileTree(tree);
     } catch (error) {
@@ -73,44 +76,35 @@ const EditorPage = () => {
   };
 
   useEffect(() => {
-    if (pendingFile && content) {
-      const language = detectLanguage(pendingFile.name);
-      const newFile = {
-        ...pendingFile,
-        content,
-        language,
-      };
+    if (!pendingFile || !content) return;
 
-      setOpenFiles(prev => [...prev, newFile]);
-      setFileContents(prev => ({ ...prev, [pendingFile.id]: content }));
-      setActiveId(pendingFile.id);
+    // 🛡️ Ensure content belongs to the selected file
+    if (pendingFile.id !== selectedFileId) return;
 
-      setPendingFile(null);
-      setSelectedFileId(null);
-    }
+    const language = detectLanguage(pendingFile.name);
+    setlanguage(language);
+    const newFile = {
+      ...pendingFile,
+      content,
+      language,
+    };
 
-    if (error) {
-      console.error("Socket load error:", error);
-      setPendingFile(null);
-      setSelectedFileId(null);
-    }
-  }, [content, error, pendingFile]);
+    setOpenFiles(prev => [...prev, newFile]);
+    setFileContents(prev => ({ ...prev, [pendingFile.id]: content }));
+    setActiveId(pendingFile.id);
+
+    setPendingFile(null);
+    setSelectedFileId(null);
+  }, [content, error, pendingFile, selectedFileId]);
+
 
   const closeFile = (id) => {
     setOpenFiles((prev) => prev.filter((f) => f.id !== id));
-    
+
     if (id === activeId && openFiles.length > 1) {
       const next = openFiles.find((f) => f.id !== id);
       setActiveId(next ? next.id : '');
     }
-  };
-
-  const runCode = (id) => {
-    console.log('Run:', id);
-  };
-
-  const previewCode = (id) => {
-    console.log('Live Preview:', id);
   };
 
   const handleMouseMove = (e) => {
@@ -155,8 +149,8 @@ const EditorPage = () => {
             activeId={activeId}
             onActivate={setActiveId}
             onClose={closeFile}
-            onRun={runCode}
-            onPreview={previewCode}
+            runTrigger={runTrigger}
+            setrunTrigger={setrunTrigger}
           />
           <CodeEditor
             file={openFiles.find(f => f.id === activeId)}
@@ -170,9 +164,9 @@ const EditorPage = () => {
           className="w-1 cursor-col-resize bg-zinc-700 hover:bg-violet-500 transition-all"
         />
 
-        <div style={{ width: outputWidth }} className="bg-zinc-800">
-          <CodeOutput />
-        </div>
+        {activeId && <div style={{ width: outputWidth }} className="bg-zinc-800">
+          <CodeOutput runTrigger={runTrigger} code={fileContents[activeId]} language={language} setrunTrigger={setrunTrigger}/>
+        </div>}
       </div>
     </div>
   );
