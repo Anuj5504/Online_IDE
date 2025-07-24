@@ -1,15 +1,16 @@
 import React, { useEffect, useState } from 'react';
-import { Lock, Users, ArrowRight, Plus } from 'lucide-react';
+import { Lock, Users, ArrowRight, Plus, Trash2Icon, X } from 'lucide-react';
 import CreateWorkspace from '../components/CreateWorkspace';
 import EditorNavbar from '../components/EditorNavbar';
-import { getallworkspace } from '../api/workplaceApi';
+import { deleteWorkspacesApi, getallworkspace } from '../api/workplaceApi';
 import { useSelector, useDispatch } from 'react-redux';
 import { Link } from 'react-router-dom';
 
 const Workspace = () => {
-  const [createProjectOpen, setcreateProjectOpen] = useState(false);
-
   const { user } = useSelector((state) => state.user);
+  const [createProjectOpen, setcreateProjectOpen] = useState(false);
+  const [deleteAct, setdeleteAct] = useState(false)
+  const [deleteWorkspace, setdeleteWorkspace] = useState([]);
 
   const [workspaces, setworkspaces] = useState([]);
 
@@ -22,7 +23,7 @@ const Workspace = () => {
         description: ws.description,
         ownerId: ws.owner._id || ws.owner,
         workspaceId: ws._id,
-        templateType:ws.templateType,
+        templateType: ws.templateType,
         role:
           (ws.owner._id || ws.owner) === user._id
             ? 'You (Owner)'
@@ -35,18 +36,29 @@ const Workspace = () => {
       alert("Error fetching workspaces");
     }
   };
-
   useEffect(() => {
     if (user) {
       handleGetWorkspace();
     }
-  }, [user]);
+  }, [user,workspaces]);
 
   const recent = [
     { name: 'Webdev1', icon: <Lock size={18} className="text-gray-400" /> },
     { name: 'My Workspace', icon: <Lock size={18} className="text-gray-400" /> },
     { name: 'DBMS-PCCOE Workspace', icon: <Users size={18} className="text-gray-400" /> },
   ];
+
+  const handleDelete =async () => {
+    console.log(deleteWorkspace)
+    try {
+      const response = await deleteWorkspacesApi({ workspaces: deleteWorkspace });
+       
+      console.log(response);
+    } catch (error) {
+      console.error("Error fetching workspaces", error);
+      alert("Error fetching workspaces");
+    }
+  }
 
   return (
     <div>
@@ -76,12 +88,34 @@ const Workspace = () => {
                   Explore the full potential of your cloud IDE with templates.
                 </p>
               </div>
-              <a
-                href="#"
-                className="text-blue-400 text-sm flex items-center gap-1 hover:underline"
-              >
-                View all <ArrowRight size={16} />
-              </a>
+              <div className="text-sm flex items-center gap-2">
+                {deleteAct ? (
+                  <div className="flex items-center gap-4 px-4 py-2 rounded-xl bg-red-50 border border-red-200 shadow-sm">
+                    <div>
+                      <p className="text-red-600 font-medium">Permanently Delete?</p>
+                      <p className="text-xs text-gray-500">Selected: {deleteWorkspace.length}</p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={handleDelete}
+                        className="px-3 py-1 text-sm font-medium text-white bg-red-500 hover:bg-red-600 rounded-md transition cursor-pointer"
+                      >
+                        Confirm
+                      </button>
+                      <X
+                        className="w-5 h-5 text-red-400 hover:text-red-600 cursor-pointer transition"
+                        onClick={() => setdeleteAct(false)}
+                      />
+                    </div>
+                  </div>
+                ) : (
+                  <Trash2Icon
+                    className="text-red-400 hover:text-red-600 cursor-pointer transition"
+                    onClick={() => setdeleteAct(true)}
+                  />
+                )}
+              </div>
+
             </div>
 
             <div className="grid grid-cols-[repeat(auto-fill,minmax(240px,1fr))] gap-6">
@@ -107,11 +141,27 @@ const Workspace = () => {
                   >
                     <div>
                       <div className='flex justify-between'>
-                      <h3 className="font-medium mb-1 text-xl">{ws.name}</h3>
-                      <h2 className="text-gray-500">{ws.templateType}</h2>
+                        <h3 className="font-medium mb-1 text-xl">{ws.name}</h3>
+                        {deleteAct && (
+                          <input
+                            type="checkbox"
+                            className="w-4 h-4 cursor-pointer"
+                            checked={deleteWorkspace.includes(ws.workspaceId)} 
+                            onClick={(e) => e.stopPropagation()}
+                            onChange={(e) => {
+                              if (e.target.checked) {
+                                setdeleteWorkspace(prev => [...prev, ws.workspaceId]);
+                              } else {
+                                setdeleteWorkspace(prev => prev.filter(id => id !== ws.workspaceId));
+                              }
+                            }}
+                          />
+                        )}
+
                       </div>
                       <p className="text-sm text-gray-400 mb-2">
                         {ws.description || 'No description provided.'}
+                        <h2 className="text-gray-500">{ws.templateType}</h2>
                       </p>
                     </div>
                     <p className="text-xs text-gray-500 italic">Role: {ws.role}</p>

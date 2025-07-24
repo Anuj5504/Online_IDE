@@ -120,4 +120,37 @@ const getUserWorkspaces = asyncHandler(async (req, res) => {
   res.status(200).json(new ApiResponse(200, workspaces, "Fetched user workspaces"));
 });
 
+export const deleteWorkspaces = asyncHandler(async (req, res) => {
+  const user = req.user;
+  const {workspaces } = req.body;
+  console.log(user)
+  if (!user || !user._id) { 
+    throw new ApiError(401, "Unauthorized");
+  }
+
+  if (!Array.isArray(workspaces) || workspaces.length === 0) {
+    throw new ApiError(400, "No workspaces provided to delete");
+  }
+
+  for (const workspaceId of workspaces) {
+    const files = await File.find({ workspaceId });
+
+    for (const file of files) {
+      if (file.s3Key) {
+        try {
+          await deleteFileFromS3(file.s3Key);
+        } catch (err) {
+          console.error(`Failed to delete S3 file: ${file.s3Key}`, err);
+        }
+      }
+    }
+
+    await File.deleteMany({ workspaceId });
+
+    await Workspace.findByIdAndDelete(workspaceId);
+  }
+
+  res.status(200).json(new ApiResponse(200, { deleted: workspaces.length }, "Workspaces deleted successfully"));
+});
+
 export { createWorkspace,getUserWorkspaces };
