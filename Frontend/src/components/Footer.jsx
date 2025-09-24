@@ -1,55 +1,66 @@
-import React from 'react';
+import React from "react";
+import { Github, Twitter, Linkedin } from "lucide-react";
 
 const Footer = () => {
   return (
-    <footer className="bg-[#1e1e1e] text-white px-6 py-12">
-      <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-8">
-      
-        <div>
-          <h3 className="text-2xl font-bold mb-2">CloudIDE</h3>
-          <p className="text-gray-400 text-sm leading-relaxed">
-            The future of collaborative coding — secure, fast, and built for the AI era.
-          </p>
+    <footer className="bg-[#0f0f0f] text-gray-400 py-12 px-6 mt-20">
+      <div className="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center gap-6">
+        {/* Logo / Brand */}
+        <div className="text-white text-2xl font-bold">
+          CloudIDE<span className="text-violet-400">.</span>
         </div>
 
-        <div>
-          <h4 className="font-semibold text-lg mb-3">Product</h4>
-          <ul className="space-y-2 text-sm text-gray-400">
-            {['Features', 'Integrations', 'Pricing', 'Changelog'].map((item, idx) => (
-              <li key={idx}>
-                <a href="#" className="hover:text-white transition-colors duration-200">{item}</a>
-              </li>
-            ))}
-          </ul>
+        {/* Navigation Links */}
+        <div className="flex gap-6 flex-wrap justify-center">
+          <a href="#hero" className="hover:text-white transition">
+            Home
+          </a>
+          <a href="#features" className="hover:text-white transition">
+            Features
+          </a>
+          <a href="#pricing" className="hover:text-white transition">
+            Pricing
+          </a>
+          <a href="#faq" className="hover:text-white transition">
+            FAQ
+          </a>
+          <a href="#contact" className="hover:text-white transition">
+            Contact
+          </a>
         </div>
 
-        <div>
-          <h4 className="font-semibold text-lg mb-3">Resources</h4>
-          <ul className="space-y-2 text-sm text-gray-400">
-            {['Documentation', 'Blog', 'Support', 'Security'].map((item, idx) => (
-              <li key={idx}>
-                <a href="#" className="hover:text-white transition-colors duration-200">{item}</a>
-              </li>
-            ))}
-          </ul>
-        </div>
-
-        <div>
-          <h4 className="font-semibold text-lg mb-3">Contact</h4>
-          <ul className="space-y-2 text-sm text-gray-400">
-            <li>
-              <a href="mailto:hello@cloudide.dev" className="hover:text-white transition-colors duration-200">
-                hello@cloudide.dev
-              </a>
-            </li>
-            <li><a href="#" className="hover:text-white transition-colors duration-200">Twitter</a></li>
-            <li><a href="#" className="hover:text-white transition-colors duration-200">LinkedIn</a></li>
-          </ul>
+        {/* Social Icons */}
+        <div className="flex gap-4">
+          <a
+            href="https://github.com/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="hover:text-white transition"
+          >
+            <Github className="w-5 h-5" />
+          </a>
+          <a
+            href="https://twitter.com/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="hover:text-white transition"
+          >
+            <Twitter className="w-5 h-5" />
+          </a>
+          <a
+            href="https://linkedin.com/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="hover:text-white transition"
+          >
+            <Linkedin className="w-5 h-5" />
+          </a>
         </div>
       </div>
 
-      <div className="mt-12 border-t border-gray-700 pt-6 text-center text-sm text-gray-500">
-        © {new Date().getFullYear()} CloudIDE. All rights reserved.
+      {/* Copyright */}
+      <div className="mt-8 text-center text-gray-500 text-sm">
+        &copy; {new Date().getFullYear()} CloudIDE. All rights reserved.
       </div>
     </footer>
   );

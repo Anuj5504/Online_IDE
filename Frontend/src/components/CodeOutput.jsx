@@ -40,7 +40,7 @@ const CodeOutput = ({ code, language, runTrigger, setrunTrigger }) => {
   };
 
   return (
-    <div className="bg-black text-green-400 p-4 font-mono text-sm h-full overflow-auto whitespace-pre-wrap">
+    <div className="bg-black text-green-400 p-4 font-mono text-sm  overflow-auto whitespace-pre-wrap h-[50vh]">
       ${output || "Run your code"}
 
       <form onSubmit={handleSubmit} className="flex">

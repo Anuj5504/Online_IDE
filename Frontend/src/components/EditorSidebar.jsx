@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import { createFile } from '../api/fileApi';
 import { useParams } from 'react-router-dom';
+import CollaborationPanel from './CollaborationPanel';
 
 const EditorSidebar = ({
   fileTree,
@@ -94,32 +95,15 @@ const EditorSidebar = ({
 
   return (
     <div className="bg-[#252526] text-gray-200 h-full flex flex-col border-r border-gray-700">
-      <div className="flex justify-around py-2 bg-[#1e1e1e] border-b border-gray-700">
-        <button
-          className={`p-2 ${activeTab === 'explorer' ? 'bg-[#333333] rounded' : ''}`}
-          onClick={() => setActiveTab('explorer')}
-        >
-          <Folder size={18} />
-        </button>
-        <button
-          className={`p-2 ${activeTab === 'collab' ? 'bg-[#333333] rounded' : ''}`}
-          onClick={() => setActiveTab('collab')}
-        >
-          <Users size={18} />
-        </button>
-        <button
-          className={`p-2 ${activeTab === 'settings' ? 'bg-[#333333] rounded' : ''}`}
-          onClick={() => setActiveTab('settings')}
-        >
-          <Settings size={18} />
-        </button>
+      <div className="flex justify-around h-9 p-1 bg-[#1e1e1e] border-b border-gray-700">
+      <span className="text-gray-400 font-medium">Explorer</span>
       </div>
 
       <div className="flex-1 overflow-y-auto p-3 text-sm">
         {activeTab === 'explorer' && (
           <>
             <div className="flex justify-between items-center mb-2">
-              <span className="text-gray-400 font-medium">Explorer</span>
+              
               <div className="flex gap-2">
                 <button title="New File" onClick={() => setCreateMode('file')}>
                   <FilePlus size={16} className="hover:text-white" />
@@ -154,18 +138,7 @@ const EditorSidebar = ({
             <div>{renderTree(fileTree)}</div>
           </>
         )}
-
-        {activeTab === 'collab' && (
-          <div className="text-gray-300">
-            <h4 className="text-white font-semibold mb-2">Collaboration</h4>
-            <ul className="space-y-2">
-              <li>Live cursors</li>
-              <li>Team chat</li>
-              <li>Invite users</li>
-            </ul>
-          </div>
-        )}
-
+{/* 
         {activeTab === 'settings' && (
           <div className="text-gray-300">
             <h4 className="text-white font-semibold mb-2">Settings</h4>
@@ -175,7 +148,7 @@ const EditorSidebar = ({
               <li>Autosave: On</li>
             </ul>
           </div>
-        )}
+        )} */}
       </div>
     </div>
   );

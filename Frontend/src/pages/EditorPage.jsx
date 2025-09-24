@@ -9,13 +9,15 @@ import { getFiles } from '../api/fileApi';
 import { transformFilesToTree } from '../utils/fileTree';
 import { useSelector } from 'react-redux'; 
 import { useFileLoader } from '../utils/fileLoader';
+import CollaborationPanel from '../components/CollaborationPanel';
+import { Divide } from 'lucide-react';
 
 const MIN_WIDTH = 100;
 const MAX_WIDTH = 600;
 
 const EditorPage = () => {
   const [sidebarWidth, setSidebarWidth] = useState(250);
-  const [outputWidth, setOutputWidth] = useState(250);
+  const [outputWidth, setOutputWidth] = useState(400);
   const isDraggingSidebar = useRef(false);
   const isDraggingOutput = useRef(false);
 
@@ -161,12 +163,14 @@ const EditorPage = () => {
 
         <div
           onMouseDown={() => (isDraggingOutput.current = true)}
-          className="w-1 cursor-col-resize bg-zinc-700 hover:bg-violet-500 transition-all"
+          className="w-1 cursor-col-resize bg-zinc-700 hover:bg-violet-500 transition-all "
         />
 
-        {activeId && <div style={{ width: outputWidth }} className="bg-zinc-800">
+        
+        <div style={{ width: outputWidth }} className="bg-zinc-800 flex flex-col">
           <CodeOutput runTrigger={runTrigger} code={fileContents[activeId]} language={language} setrunTrigger={setrunTrigger}/>
-        </div>}
+          <CollaborationPanel/>
+        </div>
       </div>
     </div>
   );

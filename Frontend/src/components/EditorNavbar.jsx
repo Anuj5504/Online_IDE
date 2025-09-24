@@ -1,7 +1,54 @@
-import { Search, Settings, Bell, ChevronDown } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { useState, useRef, useEffect } from "react";
+import { Search, Settings, Bell, ChevronDown, User } from "lucide-react";
+import { Link, Navigate, useNavigate } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
+import { logout } from "../redux/slice/userSlice";
 
 const EditorNavbar = () => {
+  const navigate = useNavigate();
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [showProfileOptions, setShowProfileOptions] = useState(false);
+
+  const notifRef = useRef();
+  const profileRef = useRef();
+
+  const dispatch = useDispatch();
+  const { user, loading, error } = useSelector((state) => state.user);
+
+    const handleClick = async () => {
+        try {
+            await dispatch(logout());
+            navigate('/');
+            console.log("Logged out");
+        } catch (error) {
+            console.error("Registration failed:", error);
+            alert(error);
+        }
+    }
+
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (
+        notifRef.current && !notifRef.current.contains(e.target)
+      ) {
+        setShowNotifications(false);
+      }
+
+      if (
+        profileRef.current && !profileRef.current.contains(e.target)
+      ) {
+        setShowProfileOptions(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const handleLogout = () => {
+    console.log("User logged out");
+  };
+
   return (
     <header className="bg-zinc-900 border-b border-zinc-800 text-white px-6 py-2 flex items-center justify-between">
       <nav className="flex items-center space-x-6 text-sm font-medium">
@@ -25,18 +72,47 @@ const EditorNavbar = () => {
         </div>
       </div>
 
-      <div className="flex items-center space-x-4">
-        <button className="hover:text-violet-400 transition">
-          <Settings size={18} />
+      <div className="flex items-center space-x-4 relative">
+        <button
+          onClick={() => navigate("/settings")}
+          className="p-1 flex items-center justify-center hover:text-violet-400 transition"
+        >
+          <Settings size={20} />
         </button>
-        <button className="hover:text-violet-400 transition">
-          <Bell size={18} />
-        </button>
-        <img
-          src="https://avatars.githubusercontent.com/u/1?v=4"
-          alt="User Avatar"
-          className="w-8 h-8 rounded-full"
-        />
+
+        <div className="relative" ref={notifRef}>
+          <button
+            onClick={() => setShowNotifications((prev) => !prev)}
+            className="p-1 flex items-center justify-center hover:text-violet-400 transition"
+          >
+            <Bell size={20} />
+          </button>
+          {showNotifications && (
+            <div className="absolute right-0 mt-2 w-64 bg-zinc-800 text-sm border border-zinc-700 rounded-md shadow-lg p-3 z-10">
+              <p className="text-gray-300">No new notifications</p>
+            </div>
+          )}
+        </div>
+
+        <div className="relative" ref={profileRef}>
+          <button
+            onClick={() => setShowProfileOptions((prev) => !prev)}
+            className="p-1 flex items-center justify-center hover:text-violet-400 transition"
+          >
+            <User size={20} />
+          </button>
+          {showProfileOptions && (
+            <div className="absolute right-0 mt-2 w-40 bg-zinc-800 border border-zinc-700 rounded-md shadow-lg p-2 z-10">
+              <button
+                onClick={handleClick}
+                className="block w-full text-left text-sm text-white hover:bg-zinc-700 px-3 py-2 rounded"
+              >
+                Logout
+              </button>
+            </div>
+          )}
+        </div>
+
       </div>
     </header>
   );
