@@ -3,6 +3,7 @@ import { Search, Settings, Bell, ChevronDown, User } from "lucide-react";
 import { Link, Navigate, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { logout } from "../redux/slice/userSlice";
+import NotificationBox from "./Notification";
 
 const EditorNavbar = () => {
   const navigate = useNavigate();
@@ -88,8 +89,8 @@ const EditorNavbar = () => {
             <Bell size={20} />
           </button>
           {showNotifications && (
-            <div className="absolute right-0 mt-2 w-64 bg-zinc-800 text-sm border border-zinc-700 rounded-md shadow-lg p-3 z-10">
-              <p className="text-gray-300">No new notifications</p>
+            <div className="absolute right-0 mt-2 p-3 z-10">
+              <NotificationBox/>
             </div>
           )}
         </div>

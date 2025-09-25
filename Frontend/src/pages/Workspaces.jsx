@@ -40,7 +40,7 @@ const Workspace = () => {
     if (user) {
       handleGetWorkspace();
     }
-  }, [user,workspaces]);
+  }, [user]);
 
   const recent = [
     { name: 'Webdev1', icon: <Lock size={18} className="text-gray-400" /> },

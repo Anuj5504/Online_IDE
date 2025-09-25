@@ -8,6 +8,7 @@ import HomePage from './pages/HomePage';
 import { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { getSession } from './redux/slice/userSlice';
+import SettingsPage from './components/Settings';
 
 
 function App() {
@@ -25,6 +26,7 @@ function App() {
         <Route path="/signin" element={<SignInPage/>}/>
         <Route path="/signup" element={<SignUpPage/>}/>
         <Route path="/workspace/:id" element={<EditorPage/>}/>
+        <Route path="/settings" element={<SettingsPage/>}/>
       </Routes>
     </div>
   )
