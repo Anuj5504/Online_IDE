@@ -229,7 +229,6 @@ const getUserInfo = asyncHandler(async (req, res) => {
 });
 
 
-
 const changeCurrentPassword = asyncHandler(async (req, res) => {
   try {
     const user = req.user;
@@ -267,21 +266,47 @@ const getAllUsers = asyncHandler(async (req, res) => {
 const getInvites = asyncHandler(async (req, res) => {
   try {
     const invites = req.user.pendingInvites;
+
+    const detailedInvites = await Promise.all(
+      invites.map(async (invite) => {
+        const workspace = await Workspace.findById(invite.workspaceId).populate(
+          "owner",
+          "email" 
+        );
+        if (!workspace) return null;
+
+        return {
+          workspaceId: workspace._id,
+          workspaceName: workspace.name,
+          senderEmail: workspace.owner?.email || null,
+          role: invite.role,
+          invitedAt: invite.invitedAt,
+        };
+      })
+    );
+    const filteredInvites = detailedInvites.filter(Boolean);
+
     return res
       .status(200)
-      .json(new ApiResponse(200, invites, "All pending invites"));
+      .json(new ApiResponse(200, filteredInvites, "All pending invites"));
   } catch (error) {
+    console.error("Error fetching invites:", error);
     throw new ApiError(500, "Unable to fetch invites");
   }
 });
 
-
 const acceptInvites = asyncHandler(async (req, res) => {
   try {
     const user = req.user;
-    const { workspaceId } = req.body;
+    const  {workspaceId}  = req.body;
+    // console.log(req.body)
+
+    if (!workspaceId) {
+      throw new ApiError(404, "WorkspaceId not provided");
+    }
 
     const workspace = await Workspace.findById(workspaceId);
+    // console.log(workspace)
     if (!workspace) {
       throw new ApiError(404, "Workspace not found");
     }
